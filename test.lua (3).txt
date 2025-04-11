@@ -686,7 +686,7 @@ spawn(
                             else
                                 loadstring(
                                     game:HttpGet(
-                                        "https://raw.githubusercontent.com/obfalchx/Api/refs/heads/main/Dough.txt"
+                                        "https://raw.githubusercontent.com/giaotrinhhoc/Api/refs/heads/main/Dough.txt"
                                     )
                                 )()
                             end
