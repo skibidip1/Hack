@@ -1,31 +1,33 @@
 getgenv().Rip = function()
     local url = 'https://hostserver.porry.store/bloxfruit/bot/JobId/indra'
+    local HttpService = game:GetService("HttpService")
     local chooses
-    local HttpService = game:GetService('HttpService')
+
+    -- Gửi request và đọc phản hồi
     local response = HttpService:JSONDecode(game:HttpGet(url))
 
-    for _, jobData in ipairs(response.JobId) do
-        for jobId, _ in pairs(jobData) do
-            if jobId ~= game.JobId then
-                chooses = jobId
-                break
-            end
+    for i, v in pairs(response) do
+        if v.jobId and v.jobId ~= game.JobId then
+            chooses = v
+            break
         end
-        if chooses then break end
     end
 
+    -- Dịch chuyển nếu tìm thấy jobId hợp lệ
     if chooses then
-        game:GetService("TeleportService"):TeleportToPlaceInstance(7449423635, chooses, game.Players.LocalPlayer)
+        game:GetService("TeleportService"):TeleportToPlaceInstance(7449423635, chooses.jobId, game.Players.LocalPlayer)
+    else
+        warn("Không tìm thấy server phù hợp từ API.")
     end
 end
 
 function CheckBossAttack()
-    for _,Boss in pairs(game.Workspace.Enemies:GetChildren()) do
+    for _, Boss in pairs(game.Workspace.Enemies:GetChildren()) do
         if (Boss.Name == "rip_indra True Form" or Boss.Name == "Dough King") and DetectingPart(Boss) and Boss.Humanoid.Health > 0 then
             return Boss
         end
     end
-    for _,Boss in pairs(game.ReplicatedStorage:GetChildren()) do
+    for _, Boss in pairs(game.ReplicatedStorage:GetChildren()) do
         if Boss.Name == "rip_indra True Form" or Boss.Name == "Dough King" then
             return Boss
         end
@@ -36,6 +38,7 @@ function DetectingPart(v1)
     return v1 and v1:FindFirstChild("HumanoidRootPart") and v1:FindFirstChild("Humanoid")
 end
 
+-- Vòng lặp kiểm tra boss
 spawn(function()
     while task.wait(3) do
         pcall(function()
