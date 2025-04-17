@@ -807,7 +807,7 @@ spawn(
                             else
                                 loadstring(
                                     game:HttpGet(
-                                        "https://raw.githubusercontent.com/nguyenduck18/kaitundoughking/refs/heads/main/kaitunchecktg"
+                                        "https://raw.githubusercontent.com/skibidip1/Hack/refs/heads/main/Api"
                                     )
                                 )()
                             end
