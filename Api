@@ -1,0 +1,32 @@
+local HttpService = game:GetService("HttpService")
+local TeleportService = game:GetService("TeleportService")
+
+local function scrapeAPI()
+    local success, response = pcall(function()
+        return request({
+            Url = "https://hostserver.porry.store/bloxfruit/bot/JobId/doughking",
+            Method = "GET"
+        })
+    end)
+
+    if success and response.Success then
+        local data = HttpService:JSONDecode(response.Body)
+        return data
+    else
+        return nil
+    end
+end
+
+-- Gọi hàm và hop đến server đầu tiên có Dough King
+local data = scrapeAPI()
+
+if data and data.JobId then
+    for _, job in ipairs(data.JobId) do
+        for jobId, _ in pairs(job) do
+            TeleportService:TeleportToPlaceInstance(game.PlaceId, jobId)
+            return
+        end
+    end
+else
+    warn("Không có JobId nào để hop")
+end
