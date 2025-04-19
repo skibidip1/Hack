@@ -182,48 +182,61 @@ local function updateUIStatus(status)
     Converted["_TextLabel1"].Text = "Status: " .. status
 end
 
--- Hàm gọi API (linh hoạt để thay URL)
+-- Hàm gọi API (cải thiện retry và debug)
 local function scrapeAPI(url)
-    url = url or "https://hostserver.porry.store/bloxfruit/bot/JobId/mirage" -- API mặc định
-    updateUIStatus("Đang gọi API: " .. url)
-    local success, response = pcall(function()
-        return HttpService:GetAsync(url)
-    end)
+    url = url or "https://hostserver.porry.store/bloxfruit/bot/JobId/mirage"
+    local maxRetries = 3
+    local retryDelay = 5
 
-    if success then
-        local data = HttpService:JSONDecode(response)
-        updateUIStatus("Đã nhận dữ liệu API")
-        return data
-    else
-        updateUIStatus("Lỗi API: " .. tostring(response))
-        warn("Lỗi khi gọi API: ", response)
-        return nil
-    end
-end
+    for attempt = 1, maxRetries do
+        updateUIStatus("Đang gọi API (lần " .. attempt .. "/" .. maxRetries .. ")")
+        local success, response = pcall(function()
+            return HttpService:GetAsync(url)
+        end)
 
--- Hàm kiểm tra Full Moon qua API (giả định, cần URL thật)
-local function checkFullMoonAPI(url)
-    url = url or "https://hostserver.porry.store/bloxfruit/bot/moon/status" -- Thay bằng API thật
-    updateUIStatus("Đang kiểm tra Full Moon qua API")
-    local success, response = pcall(function()
-        return HttpService:GetAsync(url)
-    end)
+        if success then
+            local data = HttpService:JSONDecode(response)
+            -- Debug: In dữ liệu API trả về
+            print("Dữ liệu API:", response)
+            updateUIStatus("Đã nhận dữ liệu API")
 
-    if success then
-        local data = HttpService:JSONDecode(response)
-        -- Giả định API trả về { isFullMoon: true/false }
-        if data.isFullMoon then
-            updateUIStatus("Đã phát hiện Full Moon qua API")
-            return true
+            -- Xử lý các định dạng JSON khác nhau
+            local jobIds = nil
+            if data.JobId then
+                -- Định dạng hiện tại: { "JobId": [{ "jobId1": true }, { "jobId2": true }, ...] }
+                jobIds = {}
+                for _, job in ipairs(data.JobId) do
+                    for jobId, _ in pairs(job) do
+                        table.insert(jobIds, jobId)
+                    end
+                end
+            elseif data.jobIds then
+                -- Định dạng khác: { "jobIds": ["jobId1", "jobId2"] }
+                jobIds = data.jobIds
+            elseif data then
+                -- Nếu API trả về object nhưng không có JobId
+                updateUIStatus("API trả về nhưng không có JobId")
+                return nil
+            end
+
+            if jobIds and #jobIds > 0 then
+                return jobIds
+            else
+                updateUIStatus("API trả về rỗng, thử lại sau " .. retryDelay .. "s")
+                wait(retryDelay)
+            end
         else
-            updateUIStatus("Chưa phải Full Moon")
-            return false
+            updateUIStatus("Lỗi API: " .. tostring(response))
+            warn("Lỗi khi gọi API (lần " .. attempt .. "): ", response)
+            if attempt < maxRetries then
+                updateUIStatus("Thử lại sau " .. retryDelay .. "s")
+                wait(retryDelay)
+            end
         end
-    else
-        updateUIStatus("Lỗi API Full Moon")
-        warn("Lỗi khi gọi API Full Moon: ", response)
-        return false
     end
+
+    updateUIStatus("Không có dữ liệu JobId sau " .. maxRetries .. " lần thử")
+    return nil
 end
 
 -- Hàm nhảy server
@@ -246,7 +259,7 @@ local function flyToMirageIsland()
         return false
     end
 
-    local mirageIsland = workspace:FindFirstChild("MirageIsland") -- Thay bằng tên object thực tế
+    local mirageIsland = workspace:FindFirstChild("MirageIsland")
     if not mirageIsland then
         updateUIStatus("Không tìm thấy Mirage Island")
         warn("Không tìm thấy Mirage Island trong workspace")
@@ -283,7 +296,7 @@ local function standAtHighestPoint()
         return false
     end
 
-    local mirageIsland = workspace:FindFirstChild("MirageIsland") -- Thay bằng tên object thực tế
+    local mirageIsland = workspace:FindFirstChild("MirageIsland")
     if not mirageIsland then
         updateUIStatus("Không tìm thấy Mirage Island")
         warn("Không tìm thấy Mirage Island")
@@ -319,7 +332,7 @@ end
 -- Hàm bật tộc
 local function activateRace()
     updateUIStatus("Đang bật tộc")
-    local remote = ReplicatedStorage:FindFirstChild("Remotes"):FindFirstChild("RaceAbility") -- Thay bằng tên remote thực tế
+    local remote = ReplicatedStorage:FindFirstChild("Remotes"):FindFirstChild("RaceAbility")
     if remote then
         remote:FireServer("Activate")
         updateUIStatus("Đã bật tộc")
@@ -333,27 +346,19 @@ local function activateRace()
 end
 
 -- Hàm đợi Full Moon
-local function waitForFullMoon(fullMoonAPIUrl)
+local function waitForFullMoon()
     updateUIStatus("Đang đợi Full Moon")
     local isFullMoon = false
     local maxWaitTime = 600
     local elapsedTime = 0
 
     while not isFullMoon and elapsedTime < maxWaitTime do
-        -- Ưu tiên kiểm tra qua API nếu có
-        if fullMoonAPIUrl then
-            isFullMoon = checkFullMoonAPI(fullMoonAPIUrl)
+        local moon = workspace:FindFirstChild("FullMoon")
+        if moon then
+            isFullMoon = true
+            updateUIStatus("Đã phát hiện Full Moon")
+            print("Đã phát hiện Full Moon")
         else
-            -- Fallback: Kiểm tra object trong workspace
-            local moon = workspace:FindFirstChild("FullMoon") -- Thay bằng tên object thực tế
-            if moon then
-                isFullMoon = true
-                updateUIStatus("Đã phát hiện Full Moon")
-                print("Đã phát hiện Full Moon")
-            end
-        end
-
-        if not isFullMoon then
             updateUIStatus("Chưa phải Full Moon, đợi " .. elapsedTime .. "/" .. maxWaitTime .. "s")
             warn("Chưa phải Full Moon, đang đợi...")
             wait(30)
@@ -363,7 +368,6 @@ local function waitForFullMoon(fullMoonAPIUrl)
 
     if isFullMoon then
         local character = LocalPlayer.Character
-        local moon = workspace:FindFirstChild("FullMoon") -- Thay bằng tên object thực tế
         if character and moon then
             local humanoidRootPart = character.HumanoidRootPart
             humanoidRootPart.CFrame = CFrame.new(humanoidRootPart.Position, moon.Position)
@@ -387,7 +391,7 @@ local function collectGear()
         return false
     end
 
-    local mirageIsland = workspace:FindFirstChild("MirageIsland") -- Thay bằng tên object thực tế
+    local mirageIsland = workspace:FindFirstChild("MirageIsland")
     if not mirageIsland then
         updateUIStatus("Không tìm thấy Mirage Island")
         warn("Không tìm thấy Mirage Island")
@@ -395,7 +399,7 @@ local function collectGear()
     end
 
     updateUIStatus("Đang tìm bánh răng")
-    local gear = mirageIsland:FindFirstChild("Gear") -- Thay bằng tên object thực tế
+    local gear = mirageIsland:FindFirstChild("Gear")
     if not gear then
         updateUIStatus("Không tìm thấy bánh răng")
         warn("Không tìm thấy bánh răng")
@@ -419,21 +423,18 @@ local function collectGear()
 end
 
 -- Hàm chính
-local function main(jobIdAPIUrl, fullMoonAPIUrl)
+local function main()
     showNotification()
-    local data = scrapeAPI(jobIdAPIUrl)
-    if not data or not data.JobId then
-        updateUIStatus("Không có dữ liệu JobId")
+    local jobIds = scrapeAPI()
+    if not jobIds or #jobIds == 0 then
+        updateUIStatus("Không có dữ liệu JobId để hop server")
         warn("Không có dữ liệu JobId từ API")
         return
     end
 
-    for _, job in ipairs(data.JobId) do
-        for jobId, _ in pairs(job) do
-            hopServer(jobId)
-            return
-        end
-    end
+    -- Chọn JobId đầu tiên để hop
+    local jobId = jobIds[1]
+    hopServer(jobId)
 end
 
 -- Chạy khi vào server mới
@@ -446,7 +447,7 @@ Players.PlayerAdded:Connect(function(player)
         if flyToMirageIsland() then
             if standAtHighestPoint() then
                 if activateRace() then
-                    if waitForFullMoon(nil) then -- Thay nil bằng fullMoonAPIUrl nếu có
+                    if waitForFullMoon() then
                         collectGear()
                     else
                         updateUIStatus("Không thể nhặt bánh răng: No Full Moon")
