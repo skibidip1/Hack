@@ -1,0 +1,233 @@
+local HttpService = game:GetService("HttpService")
+local TeleportService = game:GetService("TeleportService")
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+
+-- Hàm gọi API để lấy danh sách JobId của server có Mirage Island
+local function scrapeAPI()
+    local success, response = pcall(function()
+        return HttpService:GetAsync("https://hostserver.porry.store/bloxfruit/bot/JobId/mirage")
+    end)
+
+    if success then
+        local data = HttpService:JSONDecode(response)
+        return data
+    else
+        warn("Lỗi khi gọi API: ", response)
+        return nil
+    end
+end
+
+-- Hàm nhảy server
+local function hopServer(jobId)
+    if jobId then
+        print("Đang nhảy tới server JobId: ", jobId)
+        TeleportService:TeleportToPlaceInstance(game.PlaceId, jobId, LocalPlayer)
+    else
+        warn("Không có JobId hợp lệ để nhảy")
+    end
+end
+
+-- Hàm kiểm tra và bay tới Mirage Island
+local function flyToMirageIsland()
+    local character = LocalPlayer.Character
+    if not character or not character:FindFirstChild("HumanoidRootPart") then
+        warn("Nhân vật chưa spawn")
+        return false
+    end
+
+    -- Tìm Mirage Island trong workspace
+    local mirageIsland = workspace:FindFirstChild("MirageIsland") -- Thay bằng tên object thực tế
+    if not mirageIsland then
+        warn("Không tìm thấy Mirage Island trong workspace")
+        return false
+    end
+
+    -- Lấy tọa độ trung tâm của Mirage Island
+    local miragePosition = mirageIsland:GetBoundingBox().Position -- Tọa độ trung tâm đảo
+    local humanoidRootPart = character.HumanoidRootPart
+
+    -- Bật Fly
+    local bodyVelocity = Instance.new("BodyVelocity")
+    bodyVelocity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+    bodyVelocity.Velocity = Vector3.new(0, 0, 0)
+    bodyVelocity.Parent = humanoidRootPart
+
+    -- Di chuyển tới trung tâm đảo
+    while (humanoidRootPart.Position - miragePosition).Magnitude > 10 do
+        local direction = (miragePosition - humanoidRootPart.Position).Unit
+        bodyVelocity.Velocity = direction * 100 -- Tốc độ bay
+        RunService.Heartbeat:Wait()
+    end
+
+    bodyVelocity:Destroy()
+    print("Đã tới Mirage Island")
+    return true
+end
+
+-- Hàm tìm và đứng ở điểm cao nhất trên Mirage Island
+local function standAtHighestPoint()
+    local character = LocalPlayer.Character
+    if not character or not character:FindFirstChild("HumanoidRootPart") then
+        warn("Nhân vật chưa spawn")
+        return false
+    end
+
+    local mirageIsland = workspace:FindFirstChild("MirageIsland") -- Thay bằng tên object thực tế
+    if not mirageIsland then
+        warn("Không tìm thấy Mirage Island")
+        return false
+    end
+
+    -- Tìm điểm cao nhất bằng cách kiểm tra các phần tử trên đảo
+    local highestPoint = nil
+    local maxHeight = -math.huge
+    for _, part in ipairs(mirageIsland:GetDescendants()) do
+        if part:IsA("BasePart") then
+            local height = part.Position.Y
+            if height > maxHeight then
+                maxHeight = height
+                highestPoint = part.Position + Vector3.new(0, 5, 0) -- Đứng trên bề mặt
+            end
+        end
+    end
+
+    if not highestPoint then
+        warn("Không tìm thấy điểm cao nhất trên Mirage Island")
+        return false
+    end
+
+    -- Di chuyển tới điểm cao nhất
+    local humanoidRootPart = character.HumanoidRootPart
+    humanoidRootPart.CFrame = CFrame.new(highestPoint)
+    print("Đã đứng ở điểm cao nhất trên Mirage Island")
+    return true
+end
+
+-- Hàm bật tộc
+local function activateRace()
+    local remote = game:GetService("ReplicatedStorage"):FindFirstChild("Remotes"):FindFirstChild("RaceAbility") -- Thay bằng tên remote thực tế
+    if remote then
+        remote:FireServer("Activate") -- Gửi yêu cầu kích hoạt
+        print("Đã bật tộc")
+        return true
+    else
+        warn("Không tìm thấy remote RaceAbility")
+        return false
+    end
+end
+
+-- Hàm kiểm tra Full Moon
+local function waitForFullMoon()
+    local isFullMoon = false
+    local maxWaitTime = 600 -- Đợi tối đa 10 phút
+    local elapsedTime = 0
+
+    while not isFullMoon and elapsedTime < maxWaitTime do
+        local moon = workspace:FindFirstChild("FullMoon") -- Thay bằng tên object hoặc điều kiện thực tế
+        if moon then
+            isFullMoon = true
+            print("Đã phát hiện Full Moon")
+        else
+            warn("Chưa phải Full Moon, đang đợi...")
+            wait(30) -- Kiểm tra mỗi 30 giây
+            elapsedTime = elapsedTime + 30
+        end
+    end
+
+    if isFullMoon then
+        -- Nhìn vào Full Moon (giả sử FullMoon là object trong workspace)
+        local character = LocalPlayer.Character
+        if character and moon then
+            local humanoidRootPart = character.HumanoidRootPart
+            humanoidRootPart.CFrame = CFrame.new(humanoidRootPart.Position, moon.Position)
+            print("Đã nhìn vào Full Moon")
+        end
+        return true
+    else
+        warn("Hết thời gian đợi Full Moon")
+        return false
+    end
+end
+
+-- Hàm nhặt bánh răng
+local function collectGear()
+    local character = LocalPlayer.Character
+    if not character or not character:FindFirstChild("HumanoidRootPart") then
+        warn("Nhân vật chưa spawn")
+        return false
+    end
+
+    -- Tìm bánh răng trong Mirage Island
+    local mirageIsland = workspace:FindFirstChild("MirageIsland") -- Thay bằng tên object thực tế
+    if not mirageIsland then
+        warn("Không tìm thấy Mirage Island")
+        return false
+    end
+
+    local gear = mirageIsland:FindFirstChild("Gear") -- Thay bằng tên object thực tế
+    if not gear then
+        warn("Không tìm thấy bánh răng")
+        return false
+    end
+
+    -- Di chuyển tới bánh răng
+    local humanoidRootPart = character.HumanoidRootPart
+    humanoidRootPart.CFrame = CFrame.new(gear.Position + Vector3.new(0, 5, 0))
+
+    -- Tương tác để nhặt bánh răng
+    if gear:FindFirstChild("ProximityPrompt") then
+        fireproximityprompt(gear.ProximityPrompt)
+        print("Đã nhặt bánh răng")
+        return true
+    else
+        warn("Không tìm thấy ProximityPrompt trên bánh răng")
+        return false
+    end
+end
+
+-- Hàm chính
+local function main()
+    local data = scrapeAPI()
+    if not data or not data.JobId then
+        warn("Không có dữ liệu JobId từ API")
+        return
+    end
+
+    for _, job in ipairs(data.JobId) do
+        for jobId, _ in pairs(job) do
+            hopServer(jobId)
+            return
+        end
+    end
+end
+
+-- Chạy khi vào server mới
+game:GetService("Players").PlayerAdded:Connect(function(player)
+    if player == LocalPlayer then
+        LocalPlayer.CharacterAdded:Wait()
+        wait(2) -- Đợi game load
+
+        if flyToMirageIsland() then
+            if standAtHighestPoint() then
+                if activateRace() then
+                    if waitForFullMoon() then
+                        collectGear()
+                    else
+                        warn("Không thể nhặt bánh răng vì không có Full Moon")
+                    end
+                else
+                    warn("Không thể bật tộc")
+                end
+            else
+                warn("Không thể đứng ở điểm cao nhất")
+            end
+        else
+            warn("Không thể bay tới Mirage Island")
+        end
+    end
+end)
+
+-- Bắt đầu script
+main()
