@@ -182,11 +182,12 @@ local function updateUIStatus(status)
     Converted["_TextLabel1"].Text = "Status: " .. status
 end
 
--- Hàm gọi API để lấy danh sách JobId
-local function scrapeAPI()
-    updateUIStatus("Đang gọi API...")
+-- Hàm gọi API (linh hoạt để thay URL)
+local function scrapeAPI(url)
+    url = url or "https://hostserver.porry.store/bloxfruit/bot/JobId/mirage" -- API mặc định
+    updateUIStatus("Đang gọi API: " .. url)
     local success, response = pcall(function()
-        return HttpService:GetAsync("https://hostserver.porry.store/bloxfruit/bot/JobId/mirage")
+        return HttpService:GetAsync(url)
     end)
 
     if success then
@@ -194,9 +195,34 @@ local function scrapeAPI()
         updateUIStatus("Đã nhận dữ liệu API")
         return data
     else
-        updateUIStatus("Lỗi API")
+        updateUIStatus("Lỗi API: " .. tostring(response))
         warn("Lỗi khi gọi API: ", response)
         return nil
+    end
+end
+
+-- Hàm kiểm tra Full Moon qua API (giả định, cần URL thật)
+local function checkFullMoonAPI(url)
+    url = url or "https://hostserver.porry.store/bloxfruit/bot/moon/status" -- Thay bằng API thật
+    updateUIStatus("Đang kiểm tra Full Moon qua API")
+    local success, response = pcall(function()
+        return HttpService:GetAsync(url)
+    end)
+
+    if success then
+        local data = HttpService:JSONDecode(response)
+        -- Giả định API trả về { isFullMoon: true/false }
+        if data.isFullMoon then
+            updateUIStatus("Đã phát hiện Full Moon qua API")
+            return true
+        else
+            updateUIStatus("Chưa phải Full Moon")
+            return false
+        end
+    else
+        updateUIStatus("Lỗi API Full Moon")
+        warn("Lỗi khi gọi API Full Moon: ", response)
+        return false
     end
 end
 
@@ -307,19 +333,27 @@ local function activateRace()
 end
 
 -- Hàm đợi Full Moon
-local function waitForFullMoon()
+local function waitForFullMoon(fullMoonAPIUrl)
     updateUIStatus("Đang đợi Full Moon")
     local isFullMoon = false
     local maxWaitTime = 600
     local elapsedTime = 0
 
     while not isFullMoon and elapsedTime < maxWaitTime do
-        local moon = workspace:FindFirstChild("FullMoon") -- Thay bằng tên object hoặc điều kiện thực tế
-        if moon then
-            isFullMoon = true
-            updateUIStatus("Đã phát hiện Full Moon")
-            print("Đã phát hiện Full Moon")
+        -- Ưu tiên kiểm tra qua API nếu có
+        if fullMoonAPIUrl then
+            isFullMoon = checkFullMoonAPI(fullMoonAPIUrl)
         else
+            -- Fallback: Kiểm tra object trong workspace
+            local moon = workspace:FindFirstChild("FullMoon") -- Thay bằng tên object thực tế
+            if moon then
+                isFullMoon = true
+                updateUIStatus("Đã phát hiện Full Moon")
+                print("Đã phát hiện Full Moon")
+            end
+        end
+
+        if not isFullMoon then
             updateUIStatus("Chưa phải Full Moon, đợi " .. elapsedTime .. "/" .. maxWaitTime .. "s")
             warn("Chưa phải Full Moon, đang đợi...")
             wait(30)
@@ -329,6 +363,7 @@ local function waitForFullMoon()
 
     if isFullMoon then
         local character = LocalPlayer.Character
+        local moon = workspace:FindFirstChild("FullMoon") -- Thay bằng tên object thực tế
         if character and moon then
             local humanoidRootPart = character.HumanoidRootPart
             humanoidRootPart.CFrame = CFrame.new(humanoidRootPart.Position, moon.Position)
@@ -384,9 +419,9 @@ local function collectGear()
 end
 
 -- Hàm chính
-local function main()
+local function main(jobIdAPIUrl, fullMoonAPIUrl)
     showNotification()
-    local data = scrapeAPI()
+    local data = scrapeAPI(jobIdAPIUrl)
     if not data or not data.JobId then
         updateUIStatus("Không có dữ liệu JobId")
         warn("Không có dữ liệu JobId từ API")
@@ -402,7 +437,7 @@ local function main()
 end
 
 -- Chạy khi vào server mới
-game:GetService("Players").PlayerAdded:Connect(function(player)
+Players.PlayerAdded:Connect(function(player)
     if player == LocalPlayer then
         LocalPlayer.CharacterAdded:Wait()
         wait(2)
@@ -411,7 +446,7 @@ game:GetService("Players").PlayerAdded:Connect(function(player)
         if flyToMirageIsland() then
             if standAtHighestPoint() then
                 if activateRace() then
-                    if waitForFullMoon() then
+                    if waitForFullMoon(nil) then -- Thay nil bằng fullMoonAPIUrl nếu có
                         collectGear()
                     else
                         updateUIStatus("Không thể nhặt bánh răng: No Full Moon")
