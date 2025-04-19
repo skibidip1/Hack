@@ -5,6 +5,10 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LocalPlayer = Players.LocalPlayer
+local Workspace = game:GetService("Workspace")
+
+-- Biến trạng thái để kiểm soát hop server
+local hasMirageIsland = false
 
 -- Khởi tạo thông báo
 local function showNotification()
@@ -182,7 +186,23 @@ local function updateUIStatus(status)
     Converted["_TextLabel1"].Text = "Status: " .. status
 end
 
--- Hàm gọi API (tích hợp đoạn code của bạn, thêm retry và debug)
+-- Hàm kiểm tra xem server hiện tại có Mirage Island hay không
+local function checkMirageIsland()
+    local mirageIsland = Workspace:FindFirstChild("MirageIsland")
+    if mirageIsland then
+        updateUIStatus("Đã tìm thấy Mirage Island, không cần hop")
+        print("Đã tìm thấy Mirage Island trong server hiện tại")
+        hasMirageIsland = true
+        return true
+    else
+        updateUIStatus("Không tìm thấy Mirage Island, chuẩn bị hop server")
+        print("Không tìm thấy Mirage Island trong server hiện tại")
+        hasMirageIsland = false
+        return false
+    end
+end
+
+-- Hàm gọi API
 local function scrapeAPI()
     local maxRetries = 3
     local retryDelay = 5
@@ -198,14 +218,11 @@ local function scrapeAPI()
 
         if success and response.Success then
             local data = HttpService:JSONDecode(response.Body)
-            -- Debug: In dữ liệu API trả về
             print("Dữ liệu API:", response.Body)
             updateUIStatus("Đã nhận dữ liệu API")
 
-            -- Xử lý các định dạng JSON khác nhau
             local jobIds = nil
             if data.JobId then
-                -- Định dạng hiện tại: { "JobId": [{ "jobId1": true }, { "jobId2": true }, ...] }
                 jobIds = {}
                 for _, job in ipairs(data.JobId) do
                     for jobId, _ in pairs(job) do
@@ -213,10 +230,8 @@ local function scrapeAPI()
                     end
                 end
             elseif data.jobIds then
-                -- Định dạng khác: { "jobIds": ["jobId1", "jobId2"] }
                 jobIds = data.jobIds
             elseif data then
-                -- Nếu API trả về object nhưng không có JobId
                 updateUIStatus("API trả về nhưng không có JobId")
                 return nil
             end
@@ -261,7 +276,7 @@ local function flyToMirageIsland()
         return false
     end
 
-    local mirageIsland = workspace:FindFirstChild("MirageIsland")
+    local mirageIsland = Workspace:FindFirstChild("MirageIsland")
     if not mirageIsland then
         updateUIStatus("Không tìm thấy Mirage Island")
         warn("Không tìm thấy Mirage Island trong workspace")
@@ -298,7 +313,7 @@ local function standAtHighestPoint()
         return false
     end
 
-    local mirageIsland = workspace:FindFirstChild("MirageIsland")
+    local mirageIsland = Workspace:FindFirstChild("MirageIsland")
     if not mirageIsland then
         updateUIStatus("Không tìm thấy Mirage Island")
         warn("Không tìm thấy Mirage Island")
@@ -355,7 +370,7 @@ local function waitForFullMoon()
     local elapsedTime = 0
 
     while not isFullMoon and elapsedTime < maxWaitTime do
-        local moon = workspace:FindFirstChild("FullMoon")
+        local moon = Workspace:FindFirstChild("FullMoon")
         if moon then
             isFullMoon = true
             updateUIStatus("Đã phát hiện Full Moon")
@@ -393,7 +408,7 @@ local function collectGear()
         return false
     end
 
-    local mirageIsland = workspace:FindFirstChild("MirageIsland")
+    local mirageIsland = Workspace:FindFirstChild("MirageIsland")
     if not mirageIsland then
         updateUIStatus("Không tìm thấy Mirage Island")
         warn("Không tìm thấy Mirage Island")
@@ -424,19 +439,50 @@ local function collectGear()
     end
 end
 
+-- Hàm thực hiện các nhiệm vụ sau khi tìm thấy Mirage Island
+local function performTasks()
+    if flyToMirageIsland() then
+        if standAtHighestPoint() then
+            if activateRace() then
+                if waitForFullMoon() then
+                    collectGear()
+                else
+                    updateUIStatus("Không thể nhặt bánh răng: No Full Moon")
+                end
+            else
+                updateUIStatus("Không thể bật tộc")
+            end
+        else
+            updateUIStatus("Không thể đứng ở điểm cao nhất")
+        end
+    else
+        updateUIStatus("Không thể bay tới Mirage Island")
+    end
+end
+
 -- Hàm chính
 local function main()
     showNotification()
-    local jobIds = scrapeAPI()
-    if not jobIds or #jobIds == 0 then
-        updateUIStatus("Không có dữ liệu JobId để hop server")
-        warn("Không có dữ liệu JobId từ API")
-        return
-    end
+    while not hasMirageIsland do
+        -- Kiểm tra Mirage Island trong server hiện tại
+        if checkMirageIsland() then
+            performTasks()
+            break
+        else
+            -- Nếu không có Mirage Island, hop server
+            local jobIds = scrapeAPI()
+            if not jobIds or #jobIds == 0 then
+                updateUIStatus("Không có dữ liệu JobId để hop server")
+                warn("Không có dữ liệu JobId từ API")
+                break
+            end
 
-    -- Chọn JobId đầu tiên để hop
-    local jobId = jobIds[1]
-    hopServer(jobId)
+            -- Chọn JobId đầu tiên để hop
+            local jobId = jobIds[1]
+            hopServer(jobId)
+            wait(5) -- Đợi để đảm bảo server load xong
+        end
+    end
 end
 
 -- Chạy khi vào server mới
@@ -445,23 +491,11 @@ Players.PlayerAdded:Connect(function(player)
         LocalPlayer.CharacterAdded:Wait()
         wait(2)
         updateUIStatus("Đã vào server")
-
-        if flyToMirageIsland() then
-            if standAtHighestPoint() then
-                if activateRace() then
-                    if waitForFullMoon() then
-                        collectGear()
-                    else
-                        updateUIStatus("Không thể nhặt bánh răng: No Full Moon")
-                    end
-                else
-                    updateUIStatus("Không thể bật tộc")
-                end
-            else
-                updateUIStatus("Không thể đứng ở điểm cao nhất")
-            end
+        -- Kiểm tra Mirage Island và thực hiện nhiệm vụ
+        if checkMirageIsland() then
+            performTasks()
         else
-            updateUIStatus("Không thể bay tới Mirage Island")
+            main() -- Tiếp tục hop server nếu không có Mirage Island
         end
     end
 end)
