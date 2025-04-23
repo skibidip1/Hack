@@ -1,8 +1,8 @@
 if mode == "doughking" then
     loadstring(game:HttpGet("https://raw.githubusercontent.com/skibidip1/Hack/refs/heads/main/Doughking"))()
-elseif mode == "rip" then
+elseif mode == "doughking" then
     loadstring(game:HttpGet("https://raw.githubusercontent.com/skibidip1/Hack/refs/heads/main/Rip_indra"))()
-elseif mode == "dark" then
+elseif mode == "rip" then
     loadstring(game:HttpGet("https://raw.githubusercontent.com/skibidip1/Hack/refs/heads/main/Darkbeard"))()
 else
     warn("Sai mode. Chọn 'doughking', 'rip', hoặc 'dark'")
