@@ -1,0 +1,9 @@
+if mode == "doughking" then
+    loadstring(game:HttpGet("https://yourdomain.com/wmb/doughking.lua"))()
+elseif mode == "rip" then
+    loadstring(game:HttpGet("https://yourdomain.com/wmb/rip.lua"))()
+elseif mode == "dark" then
+    loadstring(game:HttpGet("https://yourdomain.com/wmb/dark.lua"))()
+else
+    warn("Sai mode. Chọn 'doughking', 'rip', hoặc 'dark'")
+end
