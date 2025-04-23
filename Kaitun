@@ -1,9 +1,19 @@
-if mode == "doughking" then
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/skibidip1/Hack/refs/heads/main/Doughking"))()
-elseif mode == "rip" then
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/skibidip1/Hack/refs/heads/main/Rip_indra"))()
-elseif mode == "dark" then
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/skibidip1/Hack/refs/heads/main/Darkbeard"))()
+local scriptName = getgenv().scriptName or "Doughking"
+
+local scripts = {
+    Doughking = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/skibidip1/Hack/refs/heads/main/Doughking"))()
+    end,
+    Rip_indra = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/skibidip1/Hack/refs/heads/main/Rip_indra"))()
+    end,
+    Darkbeard = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/skibidip1/Hack/refs/heads/main/Darkbeard"))()
+    end
+}
+
+if scripts[scriptName] then
+    scripts[scriptName]()
 else
-    warn("Sai mode. Chọn 'doughking', 'rip', hoặc 'dark'")
+    warn("Tên script không hợp lệ: " .. tostring(scriptName))
 end
