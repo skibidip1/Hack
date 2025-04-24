@@ -1,0 +1,11 @@
+local validKeys = {
+    ["W-MB-JJE8-JEJE8-JE7S7"] = true,
+    ["W-MB-ABCD-EFGH1-23456"] = true,
+}
+
+-- Kiểm tra key và load script nếu đúng
+if validKeys[getgenv().key] then
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/skibidip1/Hack/refs/heads/main/Kaitun"))()
+else
+    warn("Key không hợp lệ hoặc chưa nhập key!")
+end
