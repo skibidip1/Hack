@@ -2,7 +2,7 @@
 -- discord.gg/umaru
 -- discord.gg/umaru
 
-local Keysystem = (loadstring(game:HttpGet("https://relzhub.farrghii.com/config/keysystem.lua")))();
+
 local WindUI = (loadstring(game:HttpGet("https://tree-hub.vercel.app/api/UI/WindUI")))();
 local Window = WindUI:CreateWindow({
 	Title = "Relz Hub [ New Version ]",
@@ -19,7 +19,7 @@ local Window = WindUI:CreateWindow({
 			Keysystem:GetUserKey()
 		},
 		Note = "Get the key first to access the script.",
-		URL = tostring(Keysystem:GetKeyUrl()),
+		URL = chơi ,
 		SaveKey = false
 	}
 });
