@@ -9,6 +9,9 @@ local scripts = {
     end,
     Darkbeard = function()
         loadstring(game:HttpGet("https://raw.githubusercontent.com/skibidip1/Hack/refs/heads/main/Darkbeard"))()
+    end,
+Tyrant of the Skies = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/skibidip1/Hack/refs/heads/main/Darkbeard"))()
     end
 }
 
