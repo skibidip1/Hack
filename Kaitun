@@ -11,7 +11,7 @@ local scripts = {
         loadstring(game:HttpGet("https://raw.githubusercontent.com/skibidip1/Hack/refs/heads/main/Darkbeard"))()
     end,
 Tyrant of the Skies = function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/skibidip1/Hack/refs/heads/main/Darkbeard"))()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/skibidip1/Hack/refs/heads/main/Tyrant%20of%20the%20Skies"))()
     end
 }
 
