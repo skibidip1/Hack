@@ -1,0 +1,12 @@
+local scripts = {
+    Darkbread = "https://raw.githubusercontent.com/skibidip1/Hack/refs/heads/main/Darkbread",
+    Doughking = "https://raw.githubusercontent.com/skibidip1/Hack/refs/heads/main/Doughking",
+    Rip_indra = "https://raw.githubusercontent.com/skibidip1/Hack/refs/heads/main/Rip_indra",
+    Tyrant = "https://raw.githubusercontent.com/skibidip1/Hack/refs/heads/main/Tyrant%20of%20the%20Skies"
+}
+
+if getgenv().name and scripts[getgenv().name] then
+    loadstring(game:HttpGet(scripts[getgenv().name]))()
+else
+    warn("Tên không hợp lệ hoặc chưa đặt getgenv().name")
+end
