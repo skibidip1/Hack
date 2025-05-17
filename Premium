@@ -1,2 +1,0 @@
-setclipboard("https://discord.gg/3Py93dRz")
-game.Players.LocalPlayer:Kick("Script đang bảo trì. Link Discord đã được copy, vui lòng vào Discord để chờ đợi.")
