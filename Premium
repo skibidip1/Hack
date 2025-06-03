@@ -1,0 +1,2 @@
+--Nhìn gì skid à
+loadstring(game:HttpGet("https://raw.githubusercontent.com/skibidip1/Hack/refs/heads/main/Script1.txt"))()
