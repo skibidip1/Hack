@@ -1,7 +1,7 @@
-local place = game.PlaceId
+local placeId = game.PlaceId
 
-if place == 116495829188952 then
+if placeId == 116495829188952 then
     loadstring(game:HttpGet("https://raw.githubusercontent.com/skibidip1/Hack/main/deadrails"))()
-elseif place == 126884695634066 then
+elseif placeId == 126884695634066 then
     loadstring(game:HttpGet("https://raw.githubusercontent.com/skibidip1/Hack/main/Growagarden"))()
 end
