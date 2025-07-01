@@ -13,5 +13,5 @@ if UniverseID == 7018190066 then
     loadstring(game:HttpGet("https://raw.githubusercontent.com/skibidip1/Hack/refs/heads/main/deadrails"))()
 elseif UniverseID == 126884695634066 then
     -- Grow A Garden
-    loadstring(game:HttpGet(""))()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/skibidip1/Hack/refs/heads/main/growagarden"))()
 end
