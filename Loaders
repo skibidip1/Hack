@@ -1,1 +1,11 @@
-loadstring(game:HttpGet("https://raw.githubusercontent.com/skibidip1/Hack/refs/heads/main/Mainbloxfruits"))()
+local placeId = game.PlaceId
+if placeId == 116495829188952 or placeId == 70876832253163 then
+    -- DeadRails
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/skibidip1/Hack/refs/heads/main/Deadrails"))()
+elseif placeId == 2753915549 or placeId == 4442272183 or placeId == 7449423635 then
+    -- Blox fruits
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/skibidip1/Hack/refs/heads/main/Mainbloxfruits"))()
+elseif placeId == 79546208627805 or placeId == 126509999114328 then
+    -- Night in the forest
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/skibidip1/Hack/refs/heads/main/Nightintheforest"))()
+end
